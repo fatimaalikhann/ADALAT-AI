@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Font var ─────────────────────────────────────────────────────────── */
+  :root { --font-urdu: 'Noto Nastaliq Urdu'; }
+
+  /* ── Theme tokens ─────────────────────────────────────────────────────── */
+  :root {
+    --bg:         #f8f6f0;
+    --bg-alt:     #f0ede4;
+    --bg-card:    #ffffff;
+    --bg-deep:    #ebe8df;
+    --bg-footer:  #e8e5dc;
+    --bg-input:   #f5f2ea;
+    --text:       #0a1f44;
+    --hero-tint:  #f8f6f0;
+    --hero-fade:  #f0ede4;
+    --nav-scrolled: rgba(255, 255, 255, 0.95);
+    --nav-open:     rgba(255, 255, 255, 0.70);
+    --nav-border-scrolled: rgba(10, 31, 68, 0.10);
+    --nav-border-open:     rgba(10, 31, 68, 0.07);
+    --scrollbar-track: #f0ede4;
+    --scrollbar-thumb: #d6d1c4;
+    --dot-grid:   rgba(10, 31, 68, 0.055);
+    --scales-stroke: rgba(10, 31, 68, 0.45);
+    --particle:   rgba(10, 31, 68, 0.25);
+  }
+
+  .dark {
+    --bg:         #080810;
+    --bg-alt:     #0e0e1a;
+    --bg-card:    #13131f;
+    --bg-deep:    #111120;
+    --bg-footer:  #050508;
+    --bg-input:   #0c0c18;
+    --text:       #ffffff;
+    --hero-tint:  rgba(8, 8, 16, 0.65);
+    --hero-fade:  #080810;
+    --nav-scrolled: rgba(8, 8, 16, 0.96);
+    --nav-open:     rgba(8, 8, 16, 0.65);
+    --nav-border-scrolled: rgba(255, 255, 255, 0.09);
+    --nav-border-open:     rgba(255, 255, 255, 0.05);
+    --scrollbar-track: #080810;
+    --scrollbar-thumb: #1e1e2e;
+    --dot-grid:   rgba(255, 255, 255, 0.055);
+    --scales-stroke: rgba(255, 255, 255, 0.8);
+    --particle:   rgba(255, 255, 255, 1);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); }
+
+  ::selection {
+    background: rgba(201, 162, 39, 0.28);
+    color: var(--text);
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a2a3e; }
+}
+
+/* ── Smooth theme switching ───────────────────────────────────────────────── */
+/* Applied only while the toggle fires — prevents interfering with FM anims   */
+.switching-theme,
+.switching-theme *,
+.switching-theme *::before,
+.switching-theme *::after {
+  transition:
+    background-color 0.3s ease,
+    border-color     0.3s ease,
+    color            0.3s ease,
+    box-shadow       0.3s ease,
+    fill             0.3s ease !important;
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────────────────── */
+
+@keyframes particleFloat {
+  0%   { transform: translateY(0px) translateX(0px); opacity: 0; }
+  12%  { opacity: 0.7; }
+  88%  { opacity: 0.3; }
+  100% { transform: translateY(-150px) translateX(16px); opacity: 0; }
+}
+
+@keyframes badgeBob {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes scalesSway {
+  0%, 100% { transform: rotate(-8deg); }
+  50%       { transform: rotate(8deg); }
+}
+
+@keyframes scalesGlow {
+  0%, 100% { filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.25)); }
+  50%       { filter: drop-shadow(0 0 46px rgba(99, 102, 241, 0.60)); }
+}
+
+@keyframes linkUnderline {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+/* ── Utilities ──────────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .urdu {
+    font-family: var(--font-urdu), 'Noto Nastaliq Urdu', serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 2.4;
+    unicode-bidi: embed;
+  }
+
+  .navy-divider {
+    @apply border-t border-white/[0.06];
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  /* Card hover — animated border + glow */
+  .card-glow {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  }
+  .dark .card-glow:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 0 40px rgba(100, 60, 255, 0.07), 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+  html:not(.dark) .card-glow:hover {
+    border-color: rgba(10, 31, 68, 0.20);
+    box-shadow: 0 0 28px rgba(10, 31, 68, 0.06), 0 4px 20px rgba(10, 31, 68, 0.08);
+  }
+
+  /* Floating badges — continuous bob */
+  .badge-float {
+    animation: badgeBob 3.5s ease-in-out infinite;
+  }
+
+  /* SVG scales beam — pivots at its top-center */
+  .scales-beam {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: scalesSway 3.8s ease-in-out infinite;
+  }
+
+  /* Scales SVG wrapper — blue glow pulse */
+  .scales-glow {
+    animation: scalesGlow 4s ease-in-out infinite;
+  }
+
+  /* Nav link hover underline */
+  .nav-link {
+    position: relative;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+  }
+}

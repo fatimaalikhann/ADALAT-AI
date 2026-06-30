@@ -1,0 +1,7 @@
+{
+  "/opengraph-image/[[...__metadata_id__]]/route": "app/opengraph-image/[[...__metadata_id__]]/route.js",
+  "/apple-icon/[[...__metadata_id__]]/route": "app/apple-icon/[[...__metadata_id__]]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/about/page": "app/about/page.js"
+}
