@@ -2,14 +2,15 @@ import json
 import os
 import re
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 _api_key = os.environ.get("GEMINI_API_KEY")
 if not _api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-genai.configure(api_key=_api_key)
+_client = genai.Client(api_key=_api_key)
 
-_GEMINI_MODEL = "gemini-1.5-flash-latest"
+_GEMINI_MODEL = "gemini-1.5-flash"
 
 _SYSTEM_PROMPT = """\
 You are the Rights Explainer for AdalatAI, a legal aid system for Pakistani citizens.
@@ -39,10 +40,10 @@ _LAWYER_ALWAYS_URGENCIES = {"high", "critical"}
 
 class RightsExplainerAgent:
     def __init__(self):
-        self._model = genai.GenerativeModel(
-            model_name=_GEMINI_MODEL,
+        self._config = types.GenerateContentConfig(
             system_instruction=_SYSTEM_PROMPT,
-            generation_config={"max_output_tokens": 1024, "temperature": 0.2},
+            max_output_tokens=1024,
+            temperature=0.2,
         )
 
     def run(self, case: dict) -> dict:
@@ -56,7 +57,9 @@ class RightsExplainerAgent:
         user_message = self._build_user_message(case)
 
         try:
-            response = self._model.generate_content(user_message)
+            response = _client.models.generate_content(
+                model=_GEMINI_MODEL, contents=user_message, config=self._config
+            )
             raw = response.text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             explanation = json.loads(raw)

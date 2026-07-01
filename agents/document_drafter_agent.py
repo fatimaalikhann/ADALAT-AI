@@ -4,7 +4,8 @@ import re
 from datetime import date
 from glob import glob
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -21,9 +22,9 @@ from reportlab.platypus import (
 _api_key = os.environ.get("GEMINI_API_KEY")
 if not _api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-genai.configure(api_key=_api_key)
+_client = genai.Client(api_key=_api_key)
 
-_GEMINI_MODEL = "gemini-1.5-flash-latest"
+_GEMINI_MODEL = "gemini-1.5-flash"
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _DOCUMENTS_DIR = os.path.join(_PROJECT_ROOT, "documents")
@@ -213,10 +214,10 @@ def _build_pdf(case_id: str, doc_content: dict, urdu_font: str | None) -> str:
 
 class DocumentDrafterAgent:
     def __init__(self):
-        self._model = genai.GenerativeModel(
-            model_name=_GEMINI_MODEL,
+        self._config = types.GenerateContentConfig(
             system_instruction=_SYSTEM_PROMPT,
-            generation_config={"max_output_tokens": 2048, "temperature": 0.1},
+            max_output_tokens=2048,
+            temperature=0.1,
         )
         self._urdu_font = _try_register_urdu_font()
 
@@ -231,7 +232,9 @@ class DocumentDrafterAgent:
         user_message = self._build_user_message(case)
 
         try:
-            response = self._model.generate_content(user_message)
+            response = _client.models.generate_content(
+                model=_GEMINI_MODEL, contents=user_message, config=self._config
+            )
             raw = response.text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             doc_content = json.loads(raw)
