@@ -18,7 +18,10 @@ from reportlab.platypus import (
     Spacer,
 )
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+_api_key = os.environ.get("GEMINI_API_KEY")
+if not _api_key:
+    raise RuntimeError("GEMINI_API_KEY environment variable is not set")
+genai.configure(api_key=_api_key)
 
 _GEMINI_MODEL = "gemini-1.5-flash"
 

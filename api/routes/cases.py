@@ -1,10 +1,13 @@
 import asyncio
 import json
+import logging
 import uuid
 from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+
+logger = logging.getLogger("adalat.cases")
 
 from api.crypto import decrypt_json, decrypt_str, encrypt
 from api.db import get_pool
@@ -176,7 +179,10 @@ async def submit_case(body: CaseSubmit) -> CaseResult:
     }
     # Run synchronous pipeline without blocking the event loop
     result = await asyncio.to_thread(_pipeline.run, case)
-    await _persist(result, body)
+    try:
+        await _persist(result, body)
+    except Exception as exc:
+        logger.error("_persist failed for case_id=%s: %s", case["case_id"], exc)
     return _to_response(result)
 
 
