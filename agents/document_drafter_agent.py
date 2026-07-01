@@ -23,7 +23,7 @@ if not _api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 genai.configure(api_key=_api_key)
 
-_GEMINI_MODEL = "gemini-1.5-flash"
+_GEMINI_MODEL = "gemini-2.0-flash"
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _DOCUMENTS_DIR = os.path.join(_PROJECT_ROOT, "documents")

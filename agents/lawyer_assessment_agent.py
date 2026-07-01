@@ -9,7 +9,7 @@ if not _api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 genai.configure(api_key=_api_key)
 
-_GEMINI_MODEL = "gemini-1.5-flash"
+_GEMINI_MODEL = "gemini-2.0-flash"
 
 _SYSTEM_PROMPT = """\
 You are the Lawyer Assessment Agent for AdalatAI, a legal aid system for Pakistani citizens.
