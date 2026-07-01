@@ -326,6 +326,48 @@ function DeadlinesSection({ result }: { result: CaseResult }) {
   )
 }
 
+// ─── Pipeline error panel ─────────────────────────────────────────────────────
+
+function PipelineErrorPanel({ result }: { result: CaseResult }) {
+  const hasContent =
+    result.summary_en ||
+    result.summary_ur ||
+    result.rights_en ||
+    result.rights_ur ||
+    result.document_url ||
+    result.lawyer_needed != null ||
+    (result.deadlines && result.deadlines.length > 0)
+
+  if (hasContent) return null
+
+  return (
+    <section className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-700/30 rounded-2xl p-6 md:p-8">
+      <div className="flex items-start gap-4">
+        <span className="text-2xl mt-0.5 shrink-0">⚠</span>
+        <div>
+          <h2 className="text-orange-700 dark:text-orange-300 font-bold text-lg mb-2">
+            Pipeline did not complete
+          </h2>
+          <p className="text-[#0a1f44]/60 dark:text-white/60 text-sm leading-relaxed mb-3">
+            Your case was received (tracking number saved above) but the AI pipeline could not
+            produce results. This is usually caused by a backend configuration issue —{' '}
+            <strong>not anything you did wrong</strong>.
+          </p>
+          {result.error_message && (
+            <p className="font-mono text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg px-4 py-2.5 border border-orange-200 dark:border-orange-700/20">
+              {result.error_message}
+            </p>
+          )}
+          <p className="text-[#0a1f44]/45 dark:text-white/40 text-xs mt-4 leading-relaxed">
+            Please try submitting your case again. If this keeps happening, the service may be
+            temporarily unavailable.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ResultPage({ params }: { params: { caseId: string } }) {
@@ -437,6 +479,7 @@ export default function ResultPage({ params }: { params: { caseId: string } }) {
                 </motion.button>
               </motion.div>
 
+              <RevealSection delay={0.1}><PipelineErrorPanel result={result} /></RevealSection>
               <RevealSection delay={0.1}><SummarySection   result={result} /></RevealSection>
               <RevealSection delay={0.15}><RightsSection    result={result} /></RevealSection>
               <RevealSection delay={0.1}><DocumentSection  result={result} /></RevealSection>
