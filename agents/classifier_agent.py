@@ -1,7 +1,12 @@
 import json
+import os
 import re
 
-import anthropic
+import google.generativeai as genai
+
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+
+_GEMINI_MODEL = "gemini-1.5-flash"
 
 _SYSTEM_PROMPT = """\
 You are the Problem Classifier for AdalatAI, a legal aid system for Pakistani citizens.
@@ -28,7 +33,11 @@ JSON schema:
 
 class ClassifierAgent:
     def __init__(self):
-        self._client = anthropic.Anthropic()
+        self._model = genai.GenerativeModel(
+            model_name=_GEMINI_MODEL,
+            system_instruction=_SYSTEM_PROMPT,
+            generation_config={"max_output_tokens": 512, "temperature": 0},
+        )
 
     def run(self, case: dict) -> dict:
         result = case.copy()
@@ -45,15 +54,8 @@ class ClassifierAgent:
         )
 
         try:
-            response = self._client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=512,
-                temperature=0,
-                system=_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            raw = response.content[0].text.strip()
-            # Strip markdown code fences if the model wraps the JSON
+            response = self._model.generate_content(user_message)
+            raw = response.text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             classification = json.loads(raw)
             result.update(classification)

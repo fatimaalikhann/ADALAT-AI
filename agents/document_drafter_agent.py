@@ -4,7 +4,7 @@ import re
 from datetime import date
 from glob import glob
 
-import anthropic
+import google.generativeai as genai
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -17,6 +17,10 @@ from reportlab.platypus import (
     SimpleDocTemplate,
     Spacer,
 )
+
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+
+_GEMINI_MODEL = "gemini-1.5-flash"
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _DOCUMENTS_DIR = os.path.join(_PROJECT_ROOT, "documents")
@@ -206,7 +210,11 @@ def _build_pdf(case_id: str, doc_content: dict, urdu_font: str | None) -> str:
 
 class DocumentDrafterAgent:
     def __init__(self):
-        self._client = anthropic.Anthropic()
+        self._model = genai.GenerativeModel(
+            model_name=_GEMINI_MODEL,
+            system_instruction=_SYSTEM_PROMPT,
+            generation_config={"max_output_tokens": 2048, "temperature": 0.1},
+        )
         self._urdu_font = _try_register_urdu_font()
 
     def run(self, case: dict) -> dict:
@@ -220,14 +228,8 @@ class DocumentDrafterAgent:
         user_message = self._build_user_message(case)
 
         try:
-            response = self._client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=2048,
-                temperature=0.1,
-                system=_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            raw = response.content[0].text.strip()
+            response = self._model.generate_content(user_message)
+            raw = response.text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             doc_content = json.loads(raw)
 

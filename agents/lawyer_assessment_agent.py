@@ -1,7 +1,12 @@
 import json
+import os
 import re
 
-import anthropic
+import google.generativeai as genai
+
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+
+_GEMINI_MODEL = "gemini-1.5-flash"
 
 _SYSTEM_PROMPT = """\
 You are the Lawyer Assessment Agent for AdalatAI, a legal aid system for Pakistani citizens.
@@ -39,7 +44,11 @@ _DEFAULT_RESOURCES = "National Legal Aid Authority helpline 0800-02000, law coll
 
 class LawyerAssessmentAgent:
     def __init__(self):
-        self._client = anthropic.Anthropic()
+        self._model = genai.GenerativeModel(
+            model_name=_GEMINI_MODEL,
+            system_instruction=_SYSTEM_PROMPT,
+            generation_config={"max_output_tokens": 768, "temperature": 0},
+        )
 
     def run(self, case: dict) -> dict:
         result = case.copy()
@@ -52,14 +61,8 @@ class LawyerAssessmentAgent:
         user_message = self._build_user_message(case)
 
         try:
-            response = self._client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=768,
-                temperature=0,
-                system=_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            raw = response.content[0].text.strip()
+            response = self._model.generate_content(user_message)
+            raw = response.text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             assessment = json.loads(raw)
 
