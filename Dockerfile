@@ -9,6 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN echo 'import os\nimport subprocess\nport = os.environ.get("PORT", "8000")\nsubprocess.run(["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", port])' > start.py
+EXPOSE 8000
 
-CMD ["python", "start.py"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
