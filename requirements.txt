@@ -1,3 +1,4 @@
+# google-genai (new SDK) uses v1 endpoint; google-generativeai (old) used v1beta
 fastapi==0.104.1
 uvicorn==0.24.0
 google-genai==2.10.0
