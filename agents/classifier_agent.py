@@ -7,9 +7,9 @@ import google.generativeai as genai
 _api_key = os.environ.get("GEMINI_API_KEY")
 if not _api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-genai.configure(api_key=_api_key, transport="rest")
+genai.configure(api_key=_api_key)
 
-_GEMINI_MODEL = "models/gemini-1.5-flash"
+_GEMINI_MODEL = "gemini-1.5-flash-latest"
 
 _SYSTEM_PROMPT = """\
 You are the Problem Classifier for AdalatAI, a legal aid system for Pakistani citizens.
