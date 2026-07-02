@@ -18,6 +18,191 @@ function trackingId(caseId: string) {
   return `ADA-${caseId.slice(0, 8).toUpperCase()}`
 }
 
+// ─── PDF generation ──────────────────────────────────────────────────────────
+
+async function downloadPDF(result: CaseResult) {
+  const { default: jsPDF } = await import('jspdf')
+
+  const doc    = new jsPDF({ unit: 'mm', format: 'a4' })
+  const pageW  = 210
+  const pageH  = 297
+  const margin = 18
+  const cW     = pageW - margin * 2
+
+  const gold:  [number, number, number] = [201, 162,  39]
+  const navy:  [number, number, number] = [10,   31,  68]
+  const body:  [number, number, number] = [50,   50,  60]
+  const muted: [number, number, number] = [120, 120, 130]
+  const rule:  [number, number, number] = [210, 210, 215]
+
+  let y = 0
+
+  const lh = (size: number) => size * 0.42
+
+  function checkPage(need: number) {
+    if (y + need > pageH - 16) { doc.addPage(); y = margin }
+  }
+
+  function txt(
+    content: string,
+    { size = 10, bold = false, color = body, x = margin, w = cW }:
+    { size?: number; bold?: boolean; color?: [number, number, number]; x?: number; w?: number } = {}
+  ) {
+    doc.setFontSize(size)
+    doc.setFont('helvetica', bold ? 'bold' : 'normal')
+    doc.setTextColor(...color)
+    const lines = doc.splitTextToSize(content, w)
+    checkPage(lines.length * lh(size) + 2)
+    doc.text(lines, x, y)
+    y += lines.length * lh(size) + 1.5
+  }
+
+  function gap(mm: number) { y += mm }
+
+  function section(title: string) {
+    gap(4)
+    checkPage(10)
+    doc.setDrawColor(...gold)
+    doc.setLineWidth(0.4)
+    doc.line(margin, y, pageW - margin, y)
+    gap(3.5)
+    txt(title, { size: 10, bold: true, color: gold })
+    gap(1)
+  }
+
+  // ── Header bar ──
+  doc.setFillColor(...gold)
+  doc.rect(0, 0, pageW, 20, 'F')
+  doc.setFontSize(15)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(8, 8, 16)
+  doc.text('Adalat | AI', margin, 12)
+  doc.setFontSize(7.5)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Case Report  ·  Free Legal Aid System', margin + 1, 17)
+
+  y = 27
+
+  // Reference + date
+  const ref     = `ADA-${result.case_id.slice(0, 8).toUpperCase()}`
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  doc.setFontSize(13)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...navy)
+  doc.text(ref, margin, y)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...muted)
+  doc.text(dateStr, pageW - margin - doc.getTextWidth(dateStr), y)
+  gap(6)
+
+  if (result.pipeline_status === 'complete') {
+    doc.setFillColor(21, 128, 61)
+    doc.roundedRect(margin, y, 28, 5, 1, 1, 'F')
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text('✓ COMPLETE', margin + 3, y + 3.5)
+    gap(9)
+  } else {
+    gap(4)
+  }
+
+  // ── Case summary ──
+  if (result.summary_en || result.legal_category) {
+    section('CASE SUMMARY')
+    const LABELS: Record<string, string> = {
+      family_law: 'Family Law', labor: 'Labour & Employment',
+      property: 'Property & Land', criminal: 'Criminal Law',
+      consumer: 'Consumer Rights', tenant: 'Tenant & Rental',
+      inheritance: 'Inheritance & Wills', domestic_violence: 'Domestic Violence',
+      child_custody: 'Child Custody', debt: 'Debt & Loans',
+      police: 'Police & FIR', other: 'Other',
+    }
+    const meta: string[] = []
+    if (result.legal_category) meta.push(LABELS[result.legal_category] ?? result.legal_category)
+    if (result.urgency) meta.push(`${result.urgency[0].toUpperCase() + result.urgency.slice(1)} Urgency`)
+    if (result.confidence != null) meta.push(`${Math.round(result.confidence * 100)}% confidence`)
+    if (meta.length) txt(meta.join('  ·  '), { size: 9, color: muted })
+    if (result.sub_issues?.length) {
+      gap(0.5)
+      txt('Sub-issues: ' + result.sub_issues.join(', '), { size: 9, color: muted })
+    }
+    if (result.summary_en) { gap(2); txt(result.summary_en, { size: 10 }) }
+    if (result.document_type) { gap(1.5); txt(`Document type: ${result.document_type}`, { size: 9, color: muted }) }
+  }
+
+  // ── Legal rights ──
+  if (result.rights_en) {
+    section('YOUR LEGAL RIGHTS')
+    txt(result.rights_en, { size: 10 })
+    if (result.relevant_laws?.length) {
+      gap(3)
+      txt('Applicable Laws', { size: 9, bold: true, color: navy })
+      gap(0.5)
+      result.relevant_laws.forEach(law => { txt(`• ${law}`, { size: 9, x: margin + 3, w: cW - 3 }); gap(-0.5) })
+    }
+    if (result.recommended_actions?.length) {
+      gap(3)
+      txt('Recommended Actions', { size: 9, bold: true, color: navy })
+      gap(0.5)
+      result.recommended_actions.forEach((a, i) => { txt(`${i + 1}. ${a}`, { size: 9, x: margin + 3, w: cW - 3 }); gap(-0.5) })
+    }
+  }
+
+  // ── Lawyer assessment ──
+  if (result.lawyer_needed != null) {
+    section('LAWYER ASSESSMENT')
+    const verdict      = result.lawyer_needed ? 'A Lawyer Is Recommended' : 'You Can Self-Serve This Case'
+    const verdictColor: [number, number, number] = result.lawyer_needed ? [194, 65, 12] : [21, 128, 61]
+    txt(verdict, { size: 11, bold: true, color: verdictColor })
+    if (result.lawyer_reason) { gap(2); txt(result.lawyer_reason, { size: 10 }) }
+    if (result.referral_type && result.referral_type !== 'none') {
+      const rLabels: Record<string, string> = { legal_aid: 'Legal Aid Authority', pro_bono: 'Pro Bono Clinic', private: 'Private Counsel' }
+      gap(2)
+      txt(`Referral: ${rLabels[result.referral_type] ?? result.referral_type}`, { size: 9, bold: true, color: navy })
+    }
+    if (result.referral_note_en) { gap(1.5); txt(result.referral_note_en, { size: 9 }) }
+  }
+
+  // ── Deadlines ──
+  if (result.deadlines?.length) {
+    section('IMPORTANT DEADLINES')
+    result.deadlines.forEach(dl => {
+      checkPage(20)
+      const dotColor: [number, number, number] =
+        dl.priority === 'urgent' ? [220, 38, 38] : dl.priority === 'important' ? [234, 88, 12] : [59, 130, 246]
+      doc.setFillColor(...dotColor)
+      doc.circle(margin + 1.5, y + lh(9) / 2, 1.5, 'F')
+      txt(`${dl.deadline_date}   ${dl.deadline_type.toUpperCase()}   [${dl.priority.toUpperCase()}]`,
+        { size: 9, bold: true, color: navy, x: margin + 6, w: cW - 6 })
+      gap(-1)
+      txt(dl.description_en, { size: 9, x: margin + 6, w: cW - 6 })
+      gap(2)
+    })
+  }
+
+  // ── Footer on every page ──
+  const total: number = (doc as any).internal.getNumberOfPages()
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p)
+    doc.setDrawColor(...rule)
+    doc.setLineWidth(0.3)
+    doc.line(margin, pageH - 14, pageW - margin, pageH - 14)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...muted)
+    doc.text(
+      'AdalatAI provides information only, not legal advice. Consult a qualified lawyer for urgent matters.',
+      margin, pageH - 9
+    )
+    const pg = `${p} / ${total}`
+    doc.text(pg, pageW - margin - doc.getTextWidth(pg), pageH - 9)
+  }
+
+  doc.save(`adalat-${result.case_id.slice(0, 8).toUpperCase()}.pdf`)
+}
+
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
 function SectionHeading({ en, ur }: { en: string; ur: string }) {
@@ -192,33 +377,52 @@ function RightsSection({ result }: { result: CaseResult }) {
 // ─── Document section ─────────────────────────────────────────────────────────
 
 function DocumentSection({ result }: { result: CaseResult }) {
-  if (!result.document_url) return null
+  const [generating, setGenerating] = useState(false)
+  if (!result.summary_en && !result.rights_en) return null
+
+  async function handleDownload() {
+    setGenerating(true)
+    try {
+      await downloadPDF(result)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <section className="card-glow bg-white dark:bg-[#13131f] border border-[#0a1f44]/10 dark:border-white/[0.08] rounded-2xl p-6 md:p-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
         <div>
           <p className="text-gold font-semibold text-xs uppercase tracking-[0.15em] mb-2">
-            Legal Document Ready
+            Case Report Ready
           </p>
-          <h2 className="text-[#0a1f44] dark:text-white text-xl font-bold mb-1">{result.document_type ?? 'Legal Document'}</h2>
+          <h2 className="text-[#0a1f44] dark:text-white text-xl font-bold mb-1">
+            {result.document_type ?? 'Full Case Report'}
+          </h2>
           <p className="urdu text-[#0a1f44]/45 dark:text-white/45 text-sm">دستاویز تیار ہے</p>
           <p className="text-[#0a1f44]/30 dark:text-white/30 text-xs mt-2 max-w-sm leading-relaxed">
-            Fill in the bracketed placeholders before submitting. This is a template, not legal advice.
+            Includes summary, rights, lawyer assessment, and deadlines. Generated in your browser.
           </p>
         </div>
-        <a
-          href={result.document_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full md:w-auto justify-center shrink-0 flex items-center gap-2 bg-gold hover:bg-yellow-500 text-[#080810] font-bold px-7 py-3.5 rounded-xl transition-all shadow-[0_0_24px_rgba(201,162,39,0.22)] hover:shadow-[0_0_32px_rgba(201,162,39,0.36)] text-sm"
+        <button
+          onClick={handleDownload}
+          disabled={generating}
+          className="w-full md:w-auto justify-center shrink-0 flex items-center gap-2 bg-gold hover:bg-yellow-500 disabled:opacity-60 text-[#080810] font-bold px-7 py-3.5 rounded-xl transition-all shadow-[0_0_24px_rgba(201,162,39,0.22)] hover:shadow-[0_0_32px_rgba(201,162,39,0.36)] text-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" />
-            <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
-          </svg>
-          Download PDF
-        </a>
+          {generating ? (
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" />
+              <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
+            </svg>
+          )}
+          {generating ? 'Generating…' : 'Download PDF'}
+        </button>
       </div>
     </section>
   )
