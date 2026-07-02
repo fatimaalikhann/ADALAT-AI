@@ -428,7 +428,7 @@ function BuilderSection() {
         <Reveal delay={0.26}>
           <div className="flex justify-center gap-3 flex-wrap">
             <a
-              href="https://github.com"
+              href="https://github.com/fatimaalikhann"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 border border-[#0a1f44]/12 dark:border-white/[0.1] hover:border-[#0a1f44]/25 dark:hover:border-white/25 text-[#0a1f44]/50 dark:text-white/45 hover:text-[#0a1f44]/80 dark:hover:text-white/75 font-semibold text-sm px-5 py-2.5 rounded-xl transition-all duration-200"
@@ -439,7 +439,7 @@ function BuilderSection() {
               GitHub
             </a>
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/fatimaalikhann"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 border border-[#0a1f44]/12 dark:border-white/[0.1] hover:border-[#0a1f44]/25 dark:hover:border-white/25 text-[#0a1f44]/50 dark:text-white/45 hover:text-[#0a1f44]/80 dark:hover:text-white/75 font-semibold text-sm px-5 py-2.5 rounded-xl transition-all duration-200"
