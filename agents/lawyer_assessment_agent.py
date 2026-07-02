@@ -9,7 +9,7 @@ if not _api_key:
     raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
 _client = anthropic.Anthropic(api_key=_api_key)
 
-_MODEL = "claude-3-5-haiku-20241022"
+_MODEL = "claude-haiku-4-5-20251001"
 
 _SYSTEM_PROMPT = """\
 You are the Lawyer Assessment Agent for AdalatAI, a legal aid system for Pakistani citizens.

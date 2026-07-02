@@ -23,7 +23,7 @@ if not _api_key:
     raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
 _client = anthropic.Anthropic(api_key=_api_key)
 
-_MODEL = "claude-3-5-haiku-20241022"
+_MODEL = "claude-haiku-4-5-20251001"
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _DOCUMENTS_DIR = os.path.join(_PROJECT_ROOT, "documents")
