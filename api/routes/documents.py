@@ -1,33 +1,34 @@
+import os
 import uuid
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from api.db import get_pool
-
 router = APIRouter()
+
+# Matches the path used by document_drafter_agent.py
+_DOCUMENTS_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "documents")
+)
 
 
 @router.get("/cases/{case_id}/document")
 async def download_document(case_id: str) -> FileResponse:
     """Download the generated PDF for a completed case."""
     try:
-        uid = uuid.UUID(case_id)
+        uuid.UUID(case_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid case_id")
 
-    pool = await get_pool()
-    row = await pool.fetchrow(
-        "SELECT document_path FROM cases WHERE id = $1 AND deleted_at IS NULL", uid
-    )
-
-    if row is None:
-        raise HTTPException(status_code=404, detail="Case not found")
-    if not row["document_path"]:
-        raise HTTPException(status_code=404, detail="Document not yet generated for this case")
+    doc_path = os.path.join(_DOCUMENTS_DIR, f"{case_id}.pdf")
+    if not os.path.isfile(doc_path):
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found. It may not have been generated yet, or the server restarted.",
+        )
 
     return FileResponse(
-        path=row["document_path"],
+        path=doc_path,
         media_type="application/pdf",
         filename=f"adalat-{case_id[:8]}.pdf",
     )
