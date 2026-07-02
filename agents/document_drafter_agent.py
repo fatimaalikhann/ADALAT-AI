@@ -4,8 +4,7 @@ import re
 from datetime import date
 from glob import glob
 
-from google import genai
-from google.genai import types
+import anthropic
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -19,12 +18,12 @@ from reportlab.platypus import (
     Spacer,
 )
 
-_api_key = os.environ.get("GEMINI_API_KEY")
+_api_key = os.environ.get("ANTHROPIC_API_KEY")
 if not _api_key:
-    raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-_client = genai.Client(api_key=_api_key)
+    raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
+_client = anthropic.Anthropic(api_key=_api_key)
 
-_GEMINI_MODEL = "gemini-1.5-flash"
+_MODEL = "claude-3-5-haiku-20241022"
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _DOCUMENTS_DIR = os.path.join(_PROJECT_ROOT, "documents")
@@ -214,11 +213,6 @@ def _build_pdf(case_id: str, doc_content: dict, urdu_font: str | None) -> str:
 
 class DocumentDrafterAgent:
     def __init__(self):
-        self._config = types.GenerateContentConfig(
-            system_instruction=_SYSTEM_PROMPT,
-            max_output_tokens=2048,
-            temperature=0.1,
-        )
         self._urdu_font = _try_register_urdu_font()
 
     def run(self, case: dict) -> dict:
@@ -232,10 +226,13 @@ class DocumentDrafterAgent:
         user_message = self._build_user_message(case)
 
         try:
-            response = _client.models.generate_content(
-                model=_GEMINI_MODEL, contents=user_message, config=self._config
+            response = _client.messages.create(
+                model=_MODEL,
+                max_tokens=2048,
+                system=_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_message}],
             )
-            raw = response.text.strip()
+            raw = response.content[0].text.strip()
             raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
             doc_content = json.loads(raw)
 
