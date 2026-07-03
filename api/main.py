@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.db import close_pool
-from api.routes import cases, documents
+from api.routes import cases, documents, feedback
 
 app = FastAPI(
     title="AdalatAI",
@@ -22,6 +22,7 @@ app.add_middleware(
 
 app.include_router(cases.router,     prefix="/api")
 app.include_router(documents.router, prefix="/api")
+app.include_router(feedback.router,  prefix="/api")
 
 
 @app.on_event("shutdown")

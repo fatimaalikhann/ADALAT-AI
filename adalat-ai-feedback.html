@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AdalatAI — Beta Feedback</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#06060f;color:#fff;min-height:100vh}
+.wrap{max-width:960px;margin:0 auto;padding:2rem 1rem 4rem}
+.header{text-align:center;padding:2.5rem 0 2rem}
+.logo{font-size:28px;font-weight:600;letter-spacing:-0.5px}
+.logo span{color:#C9A84C}
+.badge{display:inline-block;margin-top:8px;font-size:10px;padding:4px 12px;border-radius:20px;background:#C9A84C22;color:#C9A84C;border:0.5px solid #C9A84C55;letter-spacing:2px}
+.header p{margin-top:12px;font-size:14px;color:#888;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+/* Live ticker at top */
+.ticker-wrap{overflow:hidden;background:#111122;border:0.5px solid #ffffff12;border-radius:12px;margin-bottom:2rem;padding:0}
+.ticker-label{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:0.5px solid #ffffff08}
+.ticker-label span{font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase}
+.ticker-label .dot{width:6px;height:6px;border-radius:50%;background:#C9A84C;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.ticker-bubbles{display:flex;gap:12px;padding:14px 16px;overflow-x:auto;scrollbar-width:none}
+.ticker-bubbles::-webkit-scrollbar{display:none}
+.bubble{flex-shrink:0;background:#0a0a1a;border:0.5px solid #ffffff12;border-radius:20px;padding:8px 16px;max-width:260px}
+.bubble-name{font-size:11px;color:#C9A84C;font-weight:500;margin-bottom:3px}
+.bubble-msg{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.bubble-empty{font-size:12px;color:#444;padding:8px 0;font-style:italic}
+
+/* Form */
+.grid{display:grid;grid-template-columns:1fr 1px 1fr;background:#111122;border:0.5px solid #ffffff18;border-radius:16px;overflow:hidden}
+.divider{background:#ffffff12}
+.col{padding:2rem}
+.col-header{padding-bottom:1.25rem;border-bottom:0.5px solid #ffffff10;margin-bottom:1.5rem}
+.col-header-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.col-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.col-icon.personal{background:#C9A84C22}
+.col-icon.pro{background:#3b82f622}
+.col-title{font-size:15px;font-weight:500}
+.col-for{font-size:12px;color:#C9A84C;letter-spacing:1px;text-transform:uppercase;margin-top:6px;font-weight:500}
+.col-for.pro-for{color:#3b82f6}
+.field{margin-bottom:1.25rem}
+.field label{display:block;font-size:11px;color:#888;letter-spacing:0.5px;margin-bottom:6px;text-transform:uppercase}
+.field input,.field textarea{width:100%;background:#0a0a1a;border:0.5px solid #ffffff18;border-radius:8px;padding:10px 12px;font-size:13px;color:#fff;font-family:inherit;resize:none;outline:none;transition:border 0.15s}
+.field input:focus,.field textarea:focus{border-color:#C9A84C}
+.field textarea{min-height:110px;line-height:1.6}
+.field textarea.pro:focus{border-color:#3b82f6}
+.char-count{font-size:10px;color:#444;text-align:right;margin-top:4px}
+.footer-bar{padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border:0.5px solid #ffffff18;border-top:none;border-radius:0 0 16px 16px;background:#111122;flex-wrap:wrap;gap:12px}
+.footer-bar p{font-size:11px;color:#444}
+.submit-btn{padding:10px 28px;border-radius:8px;background:#C9A84C;border:none;color:#06060f;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
+.submit-btn:hover{opacity:0.85}
+.submit-btn:disabled{opacity:0.5;cursor:not-allowed}
+.success{display:none;text-align:center;padding:3rem 2rem;background:#111122;border:0.5px solid #ffffff18;border-radius:16px;margin-bottom:2rem}
+.success i{font-size:48px;color:#C9A84C;display:block;margin-bottom:1rem}
+.success h3{font-size:20px;font-weight:500;margin-bottom:8px}
+.success p{font-size:14px;color:#888;line-height:1.6;margin-bottom:1.5rem}
+
+/* Full wall below form — always visible */
+.wall-section{margin-top:2.5rem}
+.wall-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.wall-header h2{font-size:16px;font-weight:500;color:#aaa}
+.wall-header span{font-size:11px;color:#666;background:#ffffff08;padding:3px 10px;border-radius:20px;border:0.5px solid #ffffff10}
+.feed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.card{background:#111122;border:0.5px solid #ffffff10;border-radius:12px;padding:1.25rem;animation:fadeIn 0.4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.avatar{width:28px;height:28px;border-radius:50%;background:#C9A84C22;border:0.5px solid #C9A84C44;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#C9A84C;flex-shrink:0}
+.card-time{font-size:10px;color:#333}
+.card-personal{font-size:13px;color:#ccc;line-height:1.6;font-style:italic;margin-bottom:8px}
+.card-pro{font-size:12px;color:#8ab4f8;line-height:1.5;font-style:italic;padding-top:8px;border-top:0.5px solid #ffffff08;margin-top:8px}
+.card-pro-label{font-size:10px;color:#3b82f655;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.empty{text-align:center;padding:2rem;color:#333;font-size:13px}
+.empty i{font-size:28px;display:block;margin-bottom:8px;color:#222}
+.loading{text-align:center;padding:1.5rem;color:#444;font-size:13px}
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr}.divider{display:none}
+  .col{border-bottom:0.5px solid #ffffff10}
+  .footer-bar{flex-direction:column;text-align:center}
+  .feed-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">Adalat <span>AI</span></div>
+    <div class="badge">BETA FEEDBACK</div>
+    <p>Help Fatima Ali Khan improve AdalatAI — your honest feedback shapes the future of legal aid in Pakistan ⚖️🇵🇰</p>
+  </div>
+
+  <!-- Live ticker of personal messages -->
+  <div class="ticker-wrap">
+    <div class="ticker-label">
+      <div class="dot"></div>
+      <span>Live feedback from testers</span>
+    </div>
+    <div class="ticker-bubbles" id="ticker"></div>
+  </div>
+
+  <!-- Form -->
+  <div id="form-body">
+    <div class="grid">
+      <div class="col">
+        <div class="col-header">
+          <div class="col-header-top">
+            <div class="col-icon personal"><i class="ti ti-heart" style="color:#C9A84C"></i></div>
+            <div class="col-title">Personal feedback</div>
+          </div>
+          <div class="col-for">For Fatima</div>
+        </div>
+        <div class="field">
+          <label>Your name (optional)</label>
+          <input type="text" id="p-name" placeholder="Your name"/>
+        </div>
+        <div class="field">
+          <label>Your message to Fatima</label>
+          <textarea id="p-msg" placeholder="Tell her what you think" maxlength="500"></textarea>
+          <div class="char-count" id="p-count">0 / 500</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="col">
+        <div class="col-header">
+          <div class="col-header-top">
+            <div class="col-icon pro"><i class="ti ti-shield-check" style="color:#3b82f6"></i></div>
+            <div class="col-title">Professional feedback</div>
+          </div>
+          <div class="col-for pro-for">Technical & legal assessment</div>
+        </div>
+        <div class="field">
+          <label>Your name (optional)</label>
+          <input type="text" id="pro-name" placeholder="Your name"/>
+        </div>
+        <div class="field">
+          <label>Professional assessment</label>
+          <textarea class="pro" id="pro-msg" placeholder="What do you think about the legal aid system?" maxlength="500"></textarea>
+          <div class="char-count" id="pro-count">0 / 500</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <p>Responses visible to all visitors · AdalatAI Beta 2026</p>
+      <button class="submit-btn" id="submit-btn" onclick="submitFeedback()">Submit feedback</button>
+    </div>
+  </div>
+
+  <div class="success" id="success-screen">
+    <i class="ti ti-circle-check"></i>
+    <h3>Shukria! Thank you! 🎉</h3>
+    <p>Your message is now live below for everyone to see. Fatima will review it personally. ⚖️🇵🇰</p>
+    <button class="submit-btn" onclick="resetForm()">Add another response</button>
+  </div>
+
+  <!-- Always-visible wall of all feedback -->
+  <div class="wall-section">
+    <div class="wall-header">
+      <h2>What everyone is saying</h2>
+      <span id="count-badge">0 responses</span>
+    </div>
+    <div id="feed-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+const API = 'https://adalat-ai-production.up.railway.app/api/feedback';
+
+async function loadEntries() {
+  const res = await fetch(API);
+  if (!res.ok) throw new Error('Failed to load feedback');
+  return res.json();
+}
+
+async function saveEntry(entry) {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  });
+  if (!res.ok) throw new Error('Failed to save feedback');
+  return res.json();
+}
+
+function initials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function renderTicker(entries) {
+  const ticker = document.getElementById('ticker');
+  const withMsg = entries.filter(e => e.pMsg);
+  if (!withMsg.length) {
+    ticker.innerHTML = '<div class="bubble-empty">No messages yet — be the first to leave feedback!</div>';
+    return;
+  }
+  ticker.innerHTML = withMsg.slice(0, 10).map(e => `
+    <div class="bubble">
+      <div class="bubble-name">${e.pName || 'Anonymous'}</div>
+      <div class="bubble-msg">${e.pMsg}</div>
+    </div>`).join('');
+}
+
+function renderWall(entries) {
+  const container = document.getElementById('feed-container');
+  document.getElementById('count-badge').textContent = entries.length + ' response' + (entries.length !== 1 ? 's' : '');
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty"><i class="ti ti-message-off"></i>No feedback yet — be the first!</div>';
+    return;
+  }
+  container.innerHTML = '<div class="feed-grid">' + entries.map(e => {
+    const name = e.pName || e.proName || 'Anonymous';
+    return `<div class="card">
+      <div class="card-top">
+        <div class="card-name"><div class="avatar">${initials(name)}</div>${name}</div>
+        <div class="card-time">${e.timestamp || ''}</div>
+      </div>
+      ${e.pMsg ? `<div class="card-personal">"${e.pMsg}"</div>` : ''}
+      ${e.proMsg ? `<div class="card-pro"><div class="card-pro-label">Professional</div>"${e.proMsg}"</div>` : ''}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+async function init() {
+  try {
+    const entries = await loadEntries();
+    renderTicker(entries);
+    renderWall(entries);
+  } catch (e) {
+    document.getElementById('feed-container').innerHTML =
+      '<div class="empty"><i class="ti ti-wifi-off"></i>Could not load feedback. Please refresh.</div>';
+  }
+}
+
+['p-msg', 'pro-msg'].forEach(id => {
+  const ta = document.getElementById(id);
+  const cnt = document.getElementById(id.replace('msg', 'count'));
+  ta.addEventListener('input', () => { cnt.textContent = ta.value.length + ' / 500'; });
+});
+
+async function submitFeedback() {
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  const entry = {
+    ts: Date.now(),
+    pName: document.getElementById('p-name').value || 'Anonymous',
+    proName: document.getElementById('pro-name').value || '',
+    pMsg: document.getElementById('p-msg').value,
+    proMsg: document.getElementById('pro-msg').value,
+  };
+  try {
+    await saveEntry(entry);
+    document.getElementById('form-body').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'block';
+    const entries = await loadEntries();
+    renderTicker(entries);
+    renderWall(entries);
+  } catch (e) {
+    btn.textContent = 'Submit feedback';
+    btn.disabled = false;
+    alert('Could not save your feedback. Please try again.');
+  }
+}
+
+function resetForm() {
+  document.getElementById('form-body').style.display = 'block';
+  document.getElementById('success-screen').style.display = 'none';
+  document.getElementById('submit-btn').textContent = 'Submit feedback';
+  document.getElementById('submit-btn').disabled = false;
+  ['p-name', 'p-msg', 'pro-name', 'pro-msg'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-count').textContent = '0 / 500';
+  document.getElementById('pro-count').textContent = '0 / 500';
+}
+
+init();
+</script>
+</body>
+</html>
